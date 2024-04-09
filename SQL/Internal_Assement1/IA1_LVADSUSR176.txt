@@ -1,0 +1,48 @@
+1. select customerId , dataused from customerinteractions 
+where (month = "March" and year = 2024) 
+and DataUsed> (select avg(dataused) from customerinteractions where month = "march" and year = 2024);
+
+2. select customerID from customerinteractions 
+	group by CustomerID
+	having ( select avg(callduration) from  customerinteractions where month ='march') > 
+	(select avg(callduration) from  customerinteractions where month = 'February'); 
+
+3. 
+4. 
+
+5. select producttypeid, TotalSalesAmount from quarterlysales 
+	where quarter = 'q1' and year = 2024 
+	order by TotalSalesAmount desc limit 1;
+6. select TotalSalesAmount/UnitsSold as average_sale_price from quarterlysales 
+	where ProductTypeID = 1 
+	and Quarter = 'Q2' 
+	and year = '2024';
+7.create or replace view marchgreen as select * from  sectorenergyconsumption
+	where month = "march" and year = 2024 
+	and (EnergySource = "solar" or EnergySource = "wind" );
+  select region, avg(consumptionkwh) from marchgreen 
+  	group by region having avg(consumptionkwh) > (select avg(consumptionkwh) from marchgreen) ;
+
+8.  select sector from sectorenergyconsumption 
+	group by sector
+	having ( select avg(ConsumptionKWh) from  sectorenergyconsumption where month ='march') > 
+	(select avg(ConsumptionKWh) from  sectorenergyconsumption where month = 'February'); 
+ 
+9. select energysource, avg(consumptionkwh) from sectorenergyconsumption
+	where year = 2024 and month = 'february' group by energysource 
+	order by avg(ConsumptionKWh) desc; 
+
+10. select * from insuranceactivities
+ 	where Investigation = "No" and feedbackscore >
+ 	(select avg(FeedbackScore) from insuranceactivities); 
+
+11. select sum(annualpremium) as total_revenue from insuranceactivities
+	where ClaimsCount>=1 
+	and investigation = "No"
+	and FeedbackScore> (select avg(FeedbackScore) from insuranceactivities); 
+
+12.select policyctype, avg(feedbackscore) from insuranceactivities group by PolicyType; 
+
+
+
+
