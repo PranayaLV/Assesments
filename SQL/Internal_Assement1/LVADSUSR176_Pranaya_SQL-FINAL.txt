@@ -1,0 +1,149 @@
+-- Q1 
+
+select product_category, sum(sales_amount) from sales_records left join products using(product_id) 
+	where 
+      datediff( now() , sales_date) < 30 
+group by product_category; 
+
+-- Q2 
+
+select product_name, sum(sales_amount) from sales_records left join products using(product_id) 
+	where 
+      year(curdate()) = year(sales_date)
+group by product_name
+order by sum(sales_amount) desc limit 3
+; 
+
+-- Q3 
+set @var_total  = (select sum(sales_amount) from sales_records) ;
+select customer_id,customer_name , sum(sales_amount)*100 / @var_total as per_contrib
+from sales_records 
+left join customers using( customer_id )
+group by customer_id , customer_name 
+order by per_contrib desc 
+limit 3 ; 
+    
+-- Q4 
+-- ------------------------------
+create or replace view q4 as  
+select customer_id,customer_name , sales_date from sales_records
+left join customers using(customer_id) 
+where sales_date> date_sub(curdate() , interval 6 month) 
+; 
+select customer_id from q4 
+group by month(sales_date) , customer_id having count(customer_id) >=4 ;
+-- -------------------------------------
+
+-- Q5 
+select departure_airport , arrival_airport , avg(ticket_price) from 
+tickets left join flights using(flight_id) 
+group by departure_airport , arrival_airport ;
+
+-- Q6 
+select flight_number, departure_date , count(*) from 
+tickets left join flights using(flight_id)  
+where datediff( now() , departure_date) < 30 
+group by flight_number , departure_date ;
+
+-- Q7 
+select passenger_id, passenger_name,sum(ticket_price) as total_price, frequent_flyer_status from 
+tickets left join passengers using(passenger_id)  
+group by passenger_id , passenger_name , frequent_flyer_status 
+order by total_price desc  limit 5
+; 
+
+-- Q8 
+
+select month(ticket_date) as month , count(*) as tickets_sold from tickets 
+group by  month order by tickets_sold desc limit 1 ; 
+
+
+-- Q9 
+
+select game_name , avg(play_date-registration_date)*24*60 as avg_playtime from playerscores
+ left join games using(game_id) 
+ left join players using(player_id) 
+  group by game_name
+;
+
+-- Q10 
+
+select game_id , game_name , count(distinct player_id) as player_count from playerscores 
+left join games using(game_id) 
+group by game_id , game_name  
+order by player_count desc limit 3 
+;
+
+-- Q11 
+
+select game_id , game_name,avg(score) as avg_score, max(score) as high_score, count(distinct player_id) as player_count from playerscores 
+left join games using(game_id) 
+group by game_id , game_name  
+;
+
+
+-- Q12 
+select player_id , player_name , registration_date , max(play_date) as recent_date from playerscores left join players using(player_id) 
+group by player_id , player_name , registration_date having datediff(curdate(), max(play_date)) < 30 
+and datediff(curdate(), min(play_date)) > 30 
+; 
+
+-- Q13 
+select doctor_id, doctor_name, sum(cost) as total_cost from treatments left join 
+doctors using(doctor_id) 
+group by doctor_id, doctor_name 
+order by sum(cost) desc limit 5 ;
+
+-- Q14 
+set @var_total = (select sum(cost) from treatments);
+select treatment_name , sum(cost) , sum(cost)*100/ @var_total as per_contrib from treatments 
+group by treatment_name 
+order by per_contrib desc ; 
+
+-- Q15 
+with cte as ( 
+	select patient_id, patient_name , admission_date , discharge_date,
+		lag(discharge_date) over(partition by patient_id order by admission_date asc ) as prev_discharge
+    from patients
+)
+select * from cte where prev_discharge is not null and 
+		datediff(admission_date,prev_discharge) <=30 ;
+;
+
+-- Q16 
+select avg(datediff(discharge_date,admission_date) ) as LOS , gender ,diagnosis from 
+patients group by  gender ,diagnosis
+order by gender
+;
+
+-- Q17 
+select department, semester , avg(grade) as avg_grade from enrollments 
+left join courses using (course_id) 
+group by department , semester 
+order by department , semester ; 
+
+-- Q18 
+
+select major , count(*) as student_count , enrollment_year
+ from students group by major , enrollment_year order by student_count desc;
+ 
+ -- Q19 
+select student_id, student_name , sum(credits) as total_cred ,semester from enrollments 
+left join students using (student_id) 
+left join courses using (course_id) 
+  
+group by student_id, student_name , semester having sum(credits) >= 50 ;
+
+-- Q20 
+create view cte as 
+select course_name, enrollment_year , count(*) as student_count from enrollments 
+left join students using (student_id) 
+left join courses using (course_id) 
+group by course_name , enrollment_year  
+;
+  with ranking  as 
+  (select * ,  rank() over(partition by enrollment_year order by student_count desc) as pr 
+  from cte ) 
+  select course_name, enrollment_year , student_count from ranking where pr <=3 ;
+  
+  
